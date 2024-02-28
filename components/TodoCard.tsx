@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Todo, TypedColumn } from "@/typing";
 import {
   DraggableProvidedDraggableProps,
@@ -9,6 +9,7 @@ import {
 import { XCircleIcon } from "@heroicons/react/24/solid";
 import { getUrl } from "@/lib/getUrl";
 import Image from "next/image";
+import useBoardStore from "@/store/BoardStore";
 
 interface Props {
   todo: Todo;
@@ -40,6 +41,46 @@ const TodoCard = ({
       fetchImage();
     }
   }, [todo]);
+
+  const [deleteTask, board, setBoardState] = useBoardStore((state) => [
+    state.deleteTask,
+    state.board,
+    state.setBoardState,
+  ]);
+
+  const deleteTodo = useCallback(() => {
+    {
+      const entries = Array.from(board.columns.entries());
+
+      const idToRemove = todo.$id;
+
+      const inProgressIndex = entries.findIndex(
+        (item) => item[0] === todo.status,
+      );
+
+      if (inProgressIndex !== -1) {
+        // Find the index of the todo with the given $id
+        const todoIndex = entries[inProgressIndex][1].todos.findIndex(
+          (todo) => todo["$id"] === idToRemove,
+        );
+
+        if (todoIndex !== -1) {
+          // Remove the todo with the matching $id
+          entries[inProgressIndex][1].todos.splice(todoIndex, 1);
+
+          const rearrangedColumns = new Map(entries);
+          setBoardState({
+            ...board,
+            columns: rearrangedColumns,
+          });
+          deleteTask(todo.$id);
+        } else {
+          console.log("Todo with the given $id not found.");
+        }
+      }
+    }
+  }, []);
+
   return (
     <div
       className="bg-white rounded-md space-y-2 drop-shadow-md"
@@ -49,7 +90,10 @@ const TodoCard = ({
     >
       <div className="flex justify-between items-center p-5">
         <p>{todo.title}</p>
-        <button className="text-red-500 hover:text-red-600">
+        <button
+          className="text-red-500 hover:text-red-600"
+          onClick={deleteTodo}
+        >
           <XCircleIcon className="ml-5 h-8 w-8" />
         </button>
       </div>

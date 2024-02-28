@@ -18,6 +18,8 @@ interface BoardState {
 
   addTask: (todo: string, columnId: TypedColumn, image?: File | null) => void;
 
+  deleteTask: (todoId: string) => void;
+
   setNewTaskInput: (input: string) => void;
   setNewTaskType: (columnId: TypedColumn) => void;
   setImage: (image: File | null) => void;
@@ -52,6 +54,14 @@ const useBoardStore = create<BoardState>((set) => ({
         title: todo.title,
         status: columnId,
       },
+    );
+  },
+
+  deleteTask: async (todoId) => {
+    await database.deleteDocument(
+      process.env.NEXT_PUBLIC_DATABASE_ID!,
+      process.env.NEXT_PUBLIC_TODOS_COLLECTION_ID!,
+      todoId,
     );
   },
 
